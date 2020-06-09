@@ -139,12 +139,12 @@ resource "aws_cloudfront_distribution" "main-lambda-edge" {
   enabled             = true
   default_root_object = var.index_document
 
-  custom_error_response {
-    error_code            = "404"
-    error_caching_min_ttl = "300"
-    response_code         = var.single_page_application ? var.spa_error_response_code : var.error_response_code
-    response_page_path    = "/${var.single_page_application ? var.index_document : var.error_document}"
-  }
+  # custom_error_response {
+  #   error_code            = "404"
+  #   error_caching_min_ttl = "300"
+  #   response_code         = var.single_page_application ? var.spa_error_response_code : var.error_response_code
+  #   response_page_path    = "/${var.single_page_application ? var.index_document : var.error_document}"
+  # }
 
   aliases = concat([var.fqdn], var.aliases)
 
@@ -166,16 +166,11 @@ resource "aws_cloudfront_distribution" "main-lambda-edge" {
 
     viewer_protocol_policy = "redirect-to-https"
     min_ttl                = 0
-    default_ttl            = 300
-    max_ttl                = 1200
+    default_ttl            = 86400
+    max_ttl                = 31536000
 
     lambda_function_association {
-      event_type = "viewer-request"
-      lambda_arn = var.lambda_edge_arn_version
-    }
-
-    lambda_function_association {
-      event_type = "viewer-response"
+      event_type = "origin-response"
       lambda_arn = var.lambda_edge_arn_version
     }
   }
@@ -189,9 +184,8 @@ resource "aws_cloudfront_distribution" "main-lambda-edge" {
   viewer_certificate {
     acm_certificate_arn      = var.ssl_certificate_arn
     ssl_support_method       = "sni-only"
-    minimum_protocol_version = "TLSv1"
+    minimum_protocol_version = "TLSv1.1_2016"
   }
 
   web_acl_id = var.web_acl_id
 }
-
